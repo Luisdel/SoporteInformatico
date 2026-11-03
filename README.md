@@ -1,6 +1,3 @@
-# Soporte Informático
+# App de Incidencias
 
-Aplicación web interna de incidencias para abrir y seguir incidencias sin contraseña desde el
-navegador, con un área de administración con login.
-
-Ver `docs/superpowers/specs/2026-11-03-gestion-incidencias-design.md`.
+Secuencia completa T1–T16 implementada en `feature/gestion-incidencias`. SQLite con `check_same_thread=False`. Cookie device hash 256-bit. Admin server-side.
