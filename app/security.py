@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import os
+import secrets
 import time
 from collections import deque
 from datetime import datetime, timedelta
@@ -16,6 +17,8 @@ SALT_BYTES = 16
 MIN_ITERATIONS = 1
 MAX_ITERATIONS = 2_000_000
 SESSION_DAYS = 7
+PURGE_MIN_KEYS = 1024
+PURGE_INTERVAL_SECONDS = 60.0
 
 
 def hash_password(password: str, iterations: int = 600_000) -> str:
@@ -48,7 +51,7 @@ def verify_password(password: str, encoded: str) -> bool:
 
 
 def new_token(nbytes: int = 32) -> str:
-    return base64.urlsafe_b64encode(os.urandom(nbytes)).decode("ascii")
+    return secrets.token_urlsafe(nbytes)
 
 
 def hash_token(token: str) -> str:
@@ -64,6 +67,13 @@ def create_admin_session(
     hours: int,
     now: datetime | None = None,
 ) -> tuple[str, str]:
+    """Crea una sesión de admin y devuelve `(token, csrf)`.
+
+    `hours` se mantiene por compatibilidad con la firma del plan, pero no
+    altera la expiración: la sesión caduca siempre de forma absoluta a los 7
+    días. La caducidad por inactividad se aplica al buscarla con
+    `find_admin_session(..., idle_hours=...)`.
+    """
     current = now or utcnow()
     token = new_token()
     csrf = new_token()
@@ -128,13 +138,26 @@ def delete_admin_session(conn, token: str) -> None:
 
 
 class RateLimiter:
+    """Límite de intentos por clave con ventana deslizante.
+
+    Las claves cuyas marcas han salido de su ventana se purgan para que el
+    diccionario no crezca sin cota con claves controladas por el cliente. Con
+    pocas claves la purga es inmediata; con muchas se amortiza a un barrido
+    cada `PURGE_INTERVAL_SECONDS` para no convertir el propio limitador en un
+    coste de CPU.
+    """
+
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock = clock
         self._hits: dict[str, deque[float]] = {}
+        self._windows: dict[str, float] = {}
+        self._last_purge = self._clock()
 
     def hit(self, key: str, limit: int, window: float) -> bool:
         now = self._clock()
+        self._purge_if_needed(now)
         marks = self._hits.setdefault(key, deque())
+        self._windows[key] = window
         cutoff = now - window
         while marks and marks[0] <= cutoff:
             marks.popleft()
@@ -145,3 +168,21 @@ class RateLimiter:
 
     def reset(self, key: str) -> None:
         self._hits.pop(key, None)
+        self._windows.pop(key, None)
+
+    def _purge_if_needed(self, now: float) -> None:
+        if (
+            len(self._hits) >= PURGE_MIN_KEYS
+            and now - self._last_purge < PURGE_INTERVAL_SECONDS
+        ):
+            return
+        self._last_purge = now
+        stale = [
+            key
+            for key, marks in self._hits.items()
+            if not marks
+            or marks[-1] <= now - self._windows.get(key, 0.0)
+        ]
+        for key in stale:
+            del self._hits[key]
+            self._windows.pop(key, None)
