@@ -1,2 +1,5 @@
 {% extends "base.html" %}
-{% block content %}<div class="card"><h1>Detalle admin</h1><p>Código: {{ ticket.code }}</p><p>Estado: {{ ticket.state }}</p><p>Asunto: {{ ticket.subject }}</p></div>{% endblock %}
+{% block content %}<div class="card"><h1>Detalle admin</h1><p>Código: {{ ticket.code }}</p><p>Estado: {{ ticket.state }}</p><p>Asunto: {{ ticket.subject }}</p>
+<h2>Mensajes</h2>
+<ul>{% for m in messages %}<li><strong>{{ m.author_type }}</strong>: {{ m.body }}</li>{% endfor %}</ul>
+</div>{% endblock %}
