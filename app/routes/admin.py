@@ -37,6 +37,46 @@ def list_own(request: Request, conn=Depends(get_db)):
     return templates.TemplateResponse(request, "public/list.html", {"request": request, "tickets": rows})
 
 
+@router.get("/admin/incidencias/{ticket_id}")
+def admin_detail(request: Request, ticket_id: int, conn=Depends(get_db)):
+    t = get_ticket(conn, ticket_id)
+    if t is None:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    messages = list_messages(conn, ticket_id, include_internal=True)
+    return templates.TemplateResponse(request, "admin/ticket.html", {"request": request, "ticket": t, "messages": messages})
+
+
+@router.post("/admin/incidencias/{ticket_id}/responder")
+def admin_responder(request: Request, ticket_id: int, conn=Depends(get_db), body: str = Form(""), is_internal: str = Form("0")):
+    admin_id = 1
+    post_requester_message(conn, ticket_id, admin_id, body)
+    if is_internal == "1":
+        conn.execute("update messages set is_internal=1 where ticket_id=? and body=?", (ticket_id, body))
+    else:
+        if get_ticket(conn, ticket_id)["state"] == "nueva":
+            conn.execute("update tickets set state='en_curso', assigned_admin_id=?, updated_at=? where id=?",
+                (admin_id, to_iso(utcnow()), ticket_id))
+            conn.execute("insert into ticket_events(ticket_id,event_type,author_admin_id,created_at) values(?,?,?,?)",
+                (ticket_id, "assignment", admin_id, to_iso(utcnow())))
+    conn.commit()
+    resp = RedirectResponse(url=f"/admin/incidencias/{ticket_id}", status_code=303)
+    return resp
+
+
+@router.post("/admin/incidencias/{ticket_id}/estado")
+def admin_estado(request: Request, ticket_id: int, conn=Depends(get_db), state: str = Form("")):
+    admin_id = 1
+    conn.execute("update tickets set state=?, resolved_at=? where id=?",
+        (state, to_iso(utcnow()) if state=="resuelta" else None, ticket_id))
+    conn.execute("insert into ticket_events(ticket_id,event_type,author_admin_id,created_at) values(?,?,?,?)",
+        (ticket_id, "resolve" if state=="resuelta" else "state_change", admin_id, to_iso(utcnow())))
+    conn.execute("insert into messages(ticket_id,author_type,author_admin_id,body,is_internal,created_at) values(?,'system',NULL,?,0,?)",
+        (ticket_id, "Estado cambiado a "+state, to_iso(utcnow())))
+    conn.commit()
+    resp = RedirectResponse(url=f"/admin/incidencias/{ticket_id}", status_code=303)
+    return resp
+
+
 @router.get("/mis-incidencias/{ticket_id}")
 def detail_own(request: Request, ticket_id: int, conn=Depends(get_db)):
     requester, _ = ensure_requester(request, conn, ip=request.client.host if request.client else "0.0.0.0", user_agent=request.headers.get("user-agent", ""))

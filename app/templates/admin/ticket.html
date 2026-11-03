@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block content %}<div class="card"><h1>Ticket admin</h1><p>{{ ticket.code }}</p><p>{{ ticket.subject }}</p>
+<ul>{% for m in messages %}<li><strong>{{ m.author_type }}</strong>: {{ m.body }} (interno: {{ m.is_internal }})</li>{% endfor %}</ul>
+</div>{% endblock %}
