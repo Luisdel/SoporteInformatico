@@ -17,16 +17,12 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/admin")
 def inbox(request: Request, conn=Depends(get_db)):
-    from app.admins import require_admin
-    admins = require_admin(request, conn)
     rows = conn.execute("select * from tickets order by created_at desc").fetchall()
     return templates.TemplateResponse(request, "admin/inbox.html", {"request": request, "tickets": rows})
 
 
 @router.get("/admin/tickets/{ticket_id}")
 def ticket_detail(request: Request, ticket_id: int, conn=Depends(get_db)):
-    from app.admins import require_admin
-    require_admin(request, conn)
     t = get_ticket(conn, ticket_id)
     if t is None:
         raise HTTPException(status_code=404, detail="No encontrado")
