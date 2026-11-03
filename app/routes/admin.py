@@ -15,6 +15,21 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
+@router.post("/admin/incidencias/{ticket_id}/asignar")
+def admin_asignar(request: Request, ticket_id: int, conn=Depends(get_db), assignee: str = Form("")):
+    admin_id = 1
+    if assignee == "me":
+        conn.execute("update tickets set assigned_admin_id=?, updated_at=? where id=?", (admin_id, to_iso(utcnow()), ticket_id))
+    elif assignee == "none":
+        conn.execute("update tickets set assigned_admin_id=NULL, updated_at=? where id=?", (to_iso(utcnow()), ticket_id))
+    else:
+        conn.execute("update tickets set assigned_admin_id=?, updated_at=? where id=?", (int(assignee), to_iso(utcnow()), ticket_id))
+    conn.execute("insert into ticket_events(ticket_id,event_type,author_admin_id,created_at) values(?,?,?,?)", (ticket_id, "assignment", admin_id, to_iso(utcnow())))
+    conn.commit()
+    resp = RedirectResponse(url=f"/admin?id={ticket_id}", status_code=303)
+    return resp
+
+
 @router.get("/admin")
 def inbox(request: Request, conn=Depends(get_db)):
     rows = conn.execute("select * from tickets order by created_at desc").fetchall()

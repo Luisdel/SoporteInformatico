@@ -1,6 +1,17 @@
 from app.db import connect
 from app.timeutil import utcnow, to_iso
 
+def admin_unread(conn, admin_id):
+    # sin asignar: nuevas sin admin
+    sin_asignar = conn.execute("select count(*) from tickets where assigned_admin_id is null and state!='resuelta'").fetchone()[0]
+    # mis no leídas: asignadas al admin con mensaje nuevo después de last read
+    mis = conn.execute("""select count(*) from tickets where assigned_admin_id=? and (requester_last_read_at is null or updated_at > requester_last_read_at)""", (admin_id,)).fetchone()[0]
+    return {"sin_asignar": sin_asignar, "mis_no_leidas": mis}
+
+def mark_read_admin(conn, ticket_id, admin_id, *, now=None):
+    conn.execute("update tickets set requester_last_read_at=? where id=?", (to_iso(now or utcnow()), ticket_id))
+    conn.commit()
+
 def post_requester_message(conn, ticket_id, requester_id, body, *, attachments=(), now=None):
     if len(body) < 10 or not body.strip():
         raise ValueError("el cuerpo debe tener al menos 10 caracteres")
