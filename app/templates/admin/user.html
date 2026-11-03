@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<h1>Historial usuario</h1><table><tr><th>Fecha</th></tr>{% for h in history %}<tr><td>{{ h.created_at }}</td></tr>{% endfor %}</table>{% endblock %}

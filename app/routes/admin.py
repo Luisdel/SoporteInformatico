@@ -7,7 +7,7 @@ from app.requesters import ensure_requester
 from app.ticket_actions import (
     get_ticket_for_requester, list_messages, post_requester_message,
     mark_read_requester, requester_unread)
-from app.tickets import get_ticket
+from app.requesters import list_requesters, requester_history, update_requester
 from app.timeutil import utcnow, to_iso
 from app.pcinfo import ClientInfo
 
@@ -28,6 +28,18 @@ def admin_asignar(request: Request, ticket_id: int, conn=Depends(get_db), assign
     conn.commit()
     resp = RedirectResponse(url=f"/admin?id={ticket_id}", status_code=303)
     return resp
+
+
+@router.get("/admin/usuarios")
+def admin_usuarios(request: Request, conn=Depends(get_db), q: str = ""):
+    rows = list_requesters(conn, q=q)
+    return templates.TemplateResponse(request, "admin/users.html", {"request": request, "users": rows})
+
+
+@router.get("/admin/usuarios/{requester_id}")
+def admin_usuario(request: Request, requester_id: int, conn=Depends(get_db)):
+    rows = requester_history(conn, requester_id)
+    return templates.TemplateResponse(request, "admin/user.html", {"request": request, "history": rows})
 
 
 @router.get("/admin")
