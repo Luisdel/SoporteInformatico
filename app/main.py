@@ -16,7 +16,7 @@ from app.routes import files as routes_files
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
-    app = FastAPI(title="Soporte Inform·tico", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Soporte Inform√°tico", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.templates = Jinja2Templates(directory="app/templates")
     app.state.login_limiter = RateLimiter()

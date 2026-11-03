@@ -7,7 +7,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else "" }}">
         <div class="field">
             <label for="name">Nombre</label>
-            <input type="text" name="name" id="name" required>
+            <input type="text" name="name" id="name" value="{{ requester.name or '' }}" required>
         </div>
         <div class="field">
             <label for="department_id">Departamento</label>

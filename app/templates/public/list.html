@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<div class="card"><h1>Mis incidencias</h1><ul>{% for t in tickets %}<li><a href="/mis-incidencias/{{ t.id }}">{{ t.code }} — {{ t.subject }}</a></li>{% endfor %}</ul></div>{% endblock %}
