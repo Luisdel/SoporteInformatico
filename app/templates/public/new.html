@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Nueva incidencia — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 style="margin-top:0;">Nueva incidencia</h1>
+    <form method="post" action="/incidencias">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else "" }}">
+        <div class="field">
+            <label for="name">Nombre</label>
+            <input type="text" name="name" id="name" required>
+        </div>
+        <div class="field">
+            <label for="department_id">Departamento</label>
+            <select name="department_id" id="department_id">
+                {% for d in departments %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="category_id">Categoría</label>
+            <select name="category_id" id="category_id">
+                {% for c in categories %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="device_name">Equipo</label>
+            <input type="text" name="device_name" id="device_name">
+        </div>
+        <div class="field">
+            <label for="priority">Prioridad</label>
+            <select name="priority" id="priority">
+                <option value="baja">baja</option>
+                <option value="normal">normal</option>
+                <option value="alta">alta</option>
+                <option value="urgente">urgente</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="subject">Asunto</label>
+            <input type="text" name="subject" id="subject" maxlength="120" required>
+        </div>
+        <div class="field">
+            <label for="description">Descripción</label>
+            <textarea name="description" id="description" rows="6" maxlength="4000" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+</div>
+{% endblock %}
