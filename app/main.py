@@ -11,7 +11,10 @@ from app.pcinfo import collect
 from app.security import RateLimiter
 from app.routes import auth as routes_auth
 from app.routes import public as routes_public
+from app.routes import auth as routes_auth
+from app.routes import public as routes_public
 from app.routes import files as routes_files
+from app.routes import admin as routes_admin
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,9 +34,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-    app.include_router(routes_auth.router)
     app.include_router(routes_public.router)
+    app.include_router(routes_auth.router)
     app.include_router(routes_files.router)
+    app.include_router(routes_admin.router)
 
     @app.get("/salud")
     def salud():
