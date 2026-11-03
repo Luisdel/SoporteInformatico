@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio de sesión — Soporte Informático{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:400px;margin:2rem auto;">
+    <h2 style="margin-top:0;">Iniciar sesión</h2>
+    <form method="post" action="/admin/login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+            <label for="username">Usuario</label>
+            <input type="text" name="username" id="username" required autofocus>
+        </div>
+        <div class="field">
+            <label for="password">Contraseña</label>
+            <input type="password" name="password" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+</div>
+{% endblock %}

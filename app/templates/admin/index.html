@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Administración — Soporte Informático{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Bandeja de incidencias</h1>
+    <p>{{ content }}</p>
+    <form action="/admin/logout" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-ghost">Cerrar sesión</button>
+    </form>
+</div>
+{% endblock %}
