@@ -11,11 +11,12 @@ from app.pcinfo import collect
 from app.security import RateLimiter
 from app.routes import auth as routes_auth
 from app.routes import public as routes_public
+from app.routes import files as routes_files
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
-    app = FastAPI(title="Soporte InformÃ¡tico", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Soporte Informático", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.templates = Jinja2Templates(directory="app/templates")
     app.state.login_limiter = RateLimiter()
@@ -32,6 +33,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(routes_auth.router)
     app.include_router(routes_public.router)
+    app.include_router(routes_files.router)
 
     @app.get("/salud")
     def salud():
