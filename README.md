@@ -49,7 +49,7 @@ las gestionan con login, roles, asignación, catálogos y adjuntos.
 ### Linux / macOS
 
 ```bash
-git clone https://github.com/TU-USUARIO/app-incidencias.git
+git clone https://github.com/Luisdel/SoporteInformatico.git
 cd app-incidencias
 python3 -m venv .venv          # usa tu Python 3.11+ (en Rocky, python3.12)
 source .venv/bin/activate
@@ -62,7 +62,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ### Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/TU-USUARIO/app-incidencias.git
+git clone https://github.com/Luisdel/SoporteInformatico.git
 cd app-incidencias
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -99,7 +99,7 @@ Python 3.12 desde fuentes. La aplicación requiere **3.11+**.
 
 ```bash
 sudo useradd --system --home-dir /opt/incidencias --shell /sbin/nologin incidencias
-sudo git clone https://github.com/TU-USUARIO/app-incidencias.git /opt/incidencias
+sudo git clone https://github.com/Luisdel/SoporteInformatico.git /opt/incidencias
 sudo chown -R incidencias:incidencias /opt/incidencias
 ```
 
