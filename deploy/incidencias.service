@@ -1,0 +1,28 @@
+[Unit]
+Description=App de incidencias (FastAPI + Uvicorn)
+Documentation=file:///opt/incidencias/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=incidencias
+Group=incidencias
+WorkingDirectory=/opt/incidencias
+EnvironmentFile=/opt/incidencias/.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/incidencias/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+KillSignal=SIGINT
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/incidencias/data
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
