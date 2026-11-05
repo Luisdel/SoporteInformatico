@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Catálogos — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>Catálogos</h1>
+    <p class="muted">Departamentos y categorías visibles en el formulario público.</p>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <h2>Departamentos</h2>
+    <form method="post" action="/admin/catalogos/departments" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="text" name="name" placeholder="Nuevo departamento" required>
+        <button type="submit" class="btn">Añadir</button>
+    </form>
+    <table>
+        <thead><tr><th>Nombre</th><th>Estado</th><th>Orden</th><th>Acciones</th></tr></thead>
+        <tbody>
+        {% for item in departments %}
+            <tr>
+                <td>
+                    <form method="post" action="/admin/catalogos/departments/{{ item.id }}/rename" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="text" name="name" value="{{ item.name }}">
+                        <button type="submit" class="btn btn-ghost">Renombrar</button>
+                    </form>
+                </td>
+                <td>{{ "Activo" if item.active else "Archivado" }}</td>
+                <td>{{ item.sort_order }}</td>
+                <td class="actions">
+                    <form method="post" action="/admin/catalogos/departments/{{ item.id }}/subir" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">↑</button>
+                    </form>
+                    <form method="post" action="/admin/catalogos/departments/{{ item.id }}/bajar" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">↓</button>
+                    </form>
+                    <form method="post" action="/admin/catalogos/departments/{{ item.id }}/{{ 'archivar' if item.active else 'activar' }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">{{ 'Archivar' if item.active else 'Activar' }}</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Categorías</h2>
+    <form method="post" action="/admin/catalogos/categories" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="text" name="name" placeholder="Nueva categoría" required>
+        <button type="submit" class="btn">Añadir</button>
+    </form>
+    <table>
+        <thead><tr><th>Nombre</th><th>Estado</th><th>Orden</th><th>Acciones</th></tr></thead>
+        <tbody>
+        {% for item in categories %}
+            <tr>
+                <td>
+                    <form method="post" action="/admin/catalogos/categories/{{ item.id }}/rename" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="text" name="name" value="{{ item.name }}">
+                        <button type="submit" class="btn btn-ghost">Renombrar</button>
+                    </form>
+                </td>
+                <td>{{ "Activo" if item.active else "Archivado" }}</td>
+                <td>{{ item.sort_order }}</td>
+                <td class="actions">
+                    <form method="post" action="/admin/catalogos/categories/{{ item.id }}/subir" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">↑</button>
+                    </form>
+                    <form method="post" action="/admin/catalogos/categories/{{ item.id }}/bajar" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">↓</button>
+                    </form>
+                    <form method="post" action="/admin/catalogos/categories/{{ item.id }}/{{ 'archivar' if item.active else 'activar' }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">{{ 'Archivar' if item.active else 'Activar' }}</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

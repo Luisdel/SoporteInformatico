@@ -18,10 +18,17 @@
         <nav class="nav">
             {% if admin is defined %}
             <a href="/admin" class="btn btn-ghost">Bandeja</a>
+            <a href="/admin/usuarios" class="btn btn-ghost">Usuarios</a>
+            <a href="/admin/catalogos" class="btn btn-ghost">Catálogos</a>
+            <a href="/admin/export.csv" class="btn btn-ghost">Exportar CSV</a>
+            <span class="muted">{{ admin.display_name }}</span>
             <form action="/admin/logout" method="post" class="inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <button type="submit" class="btn btn-ghost">Salir</button>
             </form>
+            {% else %}
+            <a href="/" class="btn btn-ghost">Nueva incidencia</a>
+            <a href="/mis-incidencias" class="btn btn-ghost">Mis incidencias</a>
             {% endif %}
         </nav>
     </header>

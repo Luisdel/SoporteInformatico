@@ -10,7 +10,7 @@ def next_code(conn, *, now):
     row = conn.execute("select value from ticket_counters where year=?", (year,)).fetchone()
     return f"INC-{year}-{row[0]:04d}"
 
-def create_ticket(conn, *, requester_id, requester_name, department_id, category_id, priority, subject, description, client, now=None):
+def create_ticket(conn, *, requester_id, requester_name, department_id, category_id, priority, subject, description, client, attachments=(), now=None):
     import datetime
     from app.timeutil import utcnow, to_iso
     if priority not in PRIORITIES:
@@ -28,6 +28,14 @@ def create_ticket(conn, *, requester_id, requester_name, department_id, category
     )
     ticket_id = conn.execute("select last_insert_rowid()").fetchone()[0]
     conn.execute("insert into messages(ticket_id, author_type, author_requester_id, body, created_at) values(?, 'requester', ?, ?, ?)", (ticket_id, requester_id, description, to_iso(now)))
+    message_id = conn.execute("select last_insert_rowid()").fetchone()[0]
+    for saved in attachments or ():
+        conn.execute(
+            "insert into attachments(ticket_id,message_id,original_name,stored_name,mime,size,created_at)"
+            " values(?,?,?,?,?,?,?)",
+            (ticket_id, message_id, saved.original_name, saved.stored_name,
+             saved.mime, saved.size, to_iso(now)),
+        )
     conn.commit()
     return ticket_id
 

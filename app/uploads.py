@@ -58,3 +58,14 @@ def save_upload(file, dest: Path, *, max_bytes: int) -> SavedFile:
     stored = token + "." + ext
     part.rename(dest / stored)
     return SavedFile(original_name=file.filename, stored_name=stored, mime=mime, size=total)
+
+
+def save_many(files, dest: Path, *, max_bytes: int, limit: int = 3) -> list[SavedFile]:
+    saved: list[SavedFile] = []
+    for file in files or []:
+        if file is None or not getattr(file, "filename", ""):
+            continue
+        if len(saved) >= limit:
+            raise UploadError(f"máximo {limit} adjuntos por mensaje")
+        saved.append(save_upload(file, dest, max_bytes=max_bytes))
+    return saved

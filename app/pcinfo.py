@@ -71,9 +71,12 @@ def lookup_hostname(ip: str, *, resolver=socket.gethostbyaddr, timeout: float = 
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(resolver, ip)
         try:
-            return future.result(timeout=timeout)
+            result = future.result(timeout=timeout)
         except (OSError, TimeoutError, Exception):
             return None
+        if isinstance(result, tuple):
+            return result[0] if result else None
+        return result
 
 
 @functools.lru_cache(maxsize=1)

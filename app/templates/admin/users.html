@@ -1,2 +1,27 @@
 {% extends "base.html" %}
-{% block content %}<h1>Usuarios</h1><table><tr><th>Nombre</th></tr>{% for u in users %}<tr><td><a href="/admin/usuarios/{{ u.id }}">{{ u.name }}</a></td></tr>{% endfor %}</table>{% endblock %}
+{% block title %}Usuarios — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>Usuarios</h1>
+    <form method="get" action="/admin/usuarios" class="filters">
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o equipo">
+        <button type="submit" class="btn">Buscar</button>
+    </form>
+    <table>
+        <thead><tr><th>Nombre</th><th>Equipo</th><th>Última IP</th><th>Última actividad</th><th></th></tr></thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td>{{ u.name or "Sin identificar" }}</td>
+                <td>{{ u.device_name or "—" }}</td>
+                <td>{{ u.last_ip or "—" }}</td>
+                <td>{{ u.last_seen_at }}</td>
+                <td><a href="/admin/usuarios/{{ u.id }}">Ver historial</a></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5">No hay usuarios.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -40,6 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(routes_api.router)
 
     @app.get("/salud")
+    @app.get("/health")
     def salud():
         return {"status": "ok"}
 

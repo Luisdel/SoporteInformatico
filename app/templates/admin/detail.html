@@ -1,5 +1,22 @@
 {% extends "base.html" %}
-{% block content %}<div class="card"><h1>Detalle admin</h1><p>Código: {{ ticket.code }}</p><p>Estado: {{ ticket.state }}</p><p>Asunto: {{ ticket.subject }}</p>
-<h2>Mensajes</h2>
-<ul>{% for m in messages %}<li><strong>{{ m.author_type }}</strong>: {{ m.body }}</li>{% endfor %}</ul>
-</div>{% endblock %}
+{% block title %}{{ ticket.code }} — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <p><a href="/admin">← Volver a la bandeja</a></p>
+    <h1>{{ ticket.code }} — {{ ticket.subject }}</h1>
+    <p class="muted">{{ ticket.requester_name }} · {{ state_labels.get(ticket.state, ticket.state) }}</p>
+    <p>{{ ticket.description }}</p>
+    <ul class="messages">
+    {% for m in messages %}
+        <li class="message message-{{ m.author_type }}{% if m.is_internal %} internal{% endif %}">
+            <strong>{{ m.author_type }}</strong>
+            {% if m.is_internal %}<span class="badge">Nota interna</span>{% endif %}
+            <p>{{ m.body }}</p>
+        </li>
+    {% else %}
+        <li>Sin mensajes.</li>
+    {% endfor %}
+    </ul>
+    <p><a href="/admin/incidencias/{{ ticket.id }}">Gestionar esta incidencia</a></p>
+</div>
+{% endblock %}

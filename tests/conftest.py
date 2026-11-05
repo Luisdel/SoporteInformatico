@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 from app.admins import create_admin
 from app.config import Settings
-from app.db import connect
+from app.db import connect, init_db
 from app.main import create_app
 from app.pcinfo import ClientInfo
 from app.security import hash_token
@@ -14,7 +14,7 @@ from uuid import uuid4
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(
+    settings = Settings(
         host="127.0.0.1", port=8000,
         db_path=tmp_path / "test.db", upload_dir=tmp_path / "uploads",
         timezone="Europe/Madrid", trusted_proxies=(),
@@ -22,6 +22,8 @@ def settings(tmp_path):
         max_upload_mb=5, secure_cookies=False,
         pbkdf2_iterations=1_000, resolve_hostnames=False,
     )
+    init_db(settings.db_path)
+    return settings
 
 
 @pytest.fixture

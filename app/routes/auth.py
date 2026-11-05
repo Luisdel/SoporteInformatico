@@ -128,13 +128,4 @@ def logout_handler(request: Request, conn=Depends(get_db)):
     return response
 
 
-@router.get("/admin", response_class=HTMLResponse)
-def admin_index(request: Request, admin: AdminContext = Depends(require_admin)):
-    return templates.TemplateResponse(
-        request, "admin/index.html",
-        {
-            "admin": admin,
-            "csrf_token": admin.csrf_token,
-            "content": "Bandeja de incidencias (pendiente de la tarea 9)",
-        },
-    )
+

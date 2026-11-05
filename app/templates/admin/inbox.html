@@ -1,2 +1,39 @@
 {% extends "base.html" %}
-{% block content %}<div class="card"><h1>Incidencias (admin)</h1><table><thead><tr><th>Código</th><th>Estado</th><th>Asunto</th></tr></thead><tbody>{% for t in tickets %}<tr><td><a href="/admin/tickets/{{ t.id }}">{{ t.code }}</a></td><td>{{ t.state }}</td><td>{{ t.subject }}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block title %}Bandeja — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>Incidencias</h1>
+    <form method="get" action="/admin" class="filters">
+        <input type="search" name="q" value="{{ filters.q }}" placeholder="Buscar código o asunto">
+        <select name="state">
+            <option value="">Todos los estados</option>
+            {% for value in states %}
+            <option value="{{ value }}" {% if filters.state == value %}selected{% endif %}>{{ state_labels[value] }}</option>
+            {% endfor %}
+        </select>
+        <label><input type="checkbox" name="mine" value="1" {% if filters.mine == "1" %}checked{% endif %}> Solo asignadas a mí</label>
+        <button type="submit" class="btn">Filtrar</button>
+    </form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p class="muted">Sin asignar: {{ unread.sin_asignar }} · Mis no leídas: {{ unread.mis_no_leidas }}</p>
+    <table>
+        <thead>
+            <tr><th>Código</th><th>Estado</th><th>Prioridad</th><th>Asunto</th><th>Solicitante</th><th>Asignada a</th></tr>
+        </thead>
+        <tbody>
+        {% for t in tickets %}
+            <tr>
+                <td><a href="/admin/incidencias/{{ t.id }}">{{ t.code }}</a></td>
+                <td>{{ state_labels.get(t.state, t.state) }}</td>
+                <td>{{ priority_labels.get(t.priority, t.priority) }}</td>
+                <td>{{ t.subject }}</td>
+                <td>{{ t.requester_name }}</td>
+                <td>{{ t.assignee_name or "—" }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">No hay incidencias.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

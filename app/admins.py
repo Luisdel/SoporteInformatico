@@ -150,9 +150,9 @@ def change_own_password(conn, admin_id: int, old_password: str, new_password: st
     conn.commit()
 
 
-def audit(conn, admin_id: int, action: str) -> None:
+def audit(conn, admin_id: int, action: str, detail: str | None = None) -> None:
     conn.execute(
-        "insert into admin_audit(admin_id, action, performed_at) values (?, ?, ?)",
-        (admin_id, action, to_iso(utcnow())),
+        "insert into admin_audit(admin_id, action, detail, created_at) values (?, ?, ?, ?)",
+        (admin_id, action, detail, to_iso(utcnow())),
     )
     conn.commit()

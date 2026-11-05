@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import Settings, load_settings
 from app.db import get_db
 from app.pcinfo import ClientInfo
+from app.uploads import UploadError, save_many
 from app.requesters import ensure_requester
 from app.ticket_actions import (
-    get_ticket_for_requester, list_messages, post_requester_message,
-    mark_read_requester, requester_unread)
+    get_ticket_for_requester, list_attachments, list_messages,
+    post_requester_message, mark_read_requester, requester_unread)
 from app.tickets import create_ticket, get_ticket
 from app.timeutil import utcnow, to_iso
 
@@ -31,6 +32,17 @@ def _ip(request: Request) -> str:
     return request.client.host if request.client else "0.0.0.0"
 
 
+def _save_files(files, settings: Settings):
+    try:
+        return save_many(
+            files,
+            settings.upload_dir,
+            max_bytes=settings.max_upload_mb * 1024 * 1024,
+        )
+    except UploadError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @router.get("/")
 def public_form(request: Request, conn=Depends(get_db), settings: Settings = Depends(load_settings)):
     requester, token = ensure_requester(request, conn, ip=_ip(request), user_agent=request.headers.get("user-agent", ""))
@@ -48,7 +60,7 @@ def create_incidencia(
     request: Request, conn=Depends(get_db), settings: Settings = Depends(load_settings),
     name: str = Form(""), department_id: str = Form(""), category_id: str = Form(""),
     priority: str = Form("normal"), subject: str = Form(""), description: str = Form(""),
-    device_name: str = Form("")
+    device_name: str = Form(""), files: list[UploadFile] = File(default=[])
 ):
     requester, token = ensure_requester(request, conn, ip=_ip(request), user_agent=request.headers.get("user-agent", ""))
     dept_id = int(department_id or 0)
@@ -59,13 +71,24 @@ def create_incidencia(
     if not name or not subject or len(description) < 10 or dept_id == 0 or cat_id == 0:
         raise HTTPException(status_code=400, detail="datos incompletos")
     client = _client(request, settings)
+    attachments = _save_files(files, settings)
     try:
         ticket_id = create_ticket(conn, requester_id=requester["id"], requester_name=name,
             department_id=dept_id, category_id=cat_id, priority=priority, subject=subject,
-            description=description, client=client, now=utcnow())
+            description=description, client=client, attachments=attachments, now=utcnow())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    resp = RedirectResponse(url=f"/mis-incidencias/{requester['id']}", status_code=303)
+    stamp = to_iso(utcnow())
+    conn.execute(
+        "update requesters set name=?, department_id=?, device_name=?,"
+        " last_ip=?, last_mac=?, last_user_agent=?, last_seen_at=?, updated_at=?"
+        " where id=?",
+        (name, dept_id, (device_name or "").strip(), getattr(client, "ip", None),
+         getattr(client, "mac", None), getattr(client, "user_agent", None),
+         stamp, stamp, requester["id"]),
+    )
+    conn.commit()
+    resp = RedirectResponse(url=f"/mis-incidencias/{ticket_id}", status_code=303)
     if token and not request.cookies.get("device"):
         resp.set_cookie("device", token, httponly=True, samesite="lax", max_age=31_536_000, secure=settings.secure_cookies)
     return resp
@@ -85,17 +108,31 @@ def detail_own(request: Request, ticket_id: int, conn=Depends(get_db)):
     if t is None or t["requester_id"] != requester["id"]:
         raise HTTPException(status_code=404, detail="No encontrado")
     messages = list_messages(conn, ticket_id)
+    attachments = list_attachments(conn, ticket_id)
     mark_read_requester(conn, ticket_id, now=utcnow())
-    return templates.TemplateResponse(request, "public/detail.html", {"request": request, "ticket": t, "messages": messages})
+    return templates.TemplateResponse(request, "public/detail.html", {
+        "request": request, "ticket": t, "messages": messages,
+        "attachments": attachments})
 
 
 @router.post("/mis-incidencias/{ticket_id}/responder")
-def responder_own(request: Request, ticket_id: int, conn=Depends(get_db), body: str = Form("")):
+def responder_own(
+    request: Request,
+    ticket_id: int,
+    conn=Depends(get_db),
+    settings: Settings = Depends(load_settings),
+    body: str = Form(""),
+    files: list[UploadFile] = File(default=[]),
+):
     requester, token = ensure_requester(request, conn, ip=_ip(request), user_agent=request.headers.get("user-agent", ""))
     t = get_ticket(conn, ticket_id)
     if t is None or t["requester_id"] != requester["id"]:
         raise HTTPException(status_code=404, detail="No encontrado")
-    post_requester_message(conn, ticket_id, requester["id"], body)
+    attachments = _save_files(files, settings)
+    try:
+        post_requester_message(conn, ticket_id, requester["id"], body, attachments=attachments)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     if t["state"] == "resuelta":
         conn.execute("update tickets set state='en_curso', reopened_count=reopened_count+1, resolved_at=NULL, updated_at=? where id=?",
             (to_iso(utcnow()), ticket_id))
