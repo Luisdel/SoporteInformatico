@@ -15,7 +15,7 @@ class AdminRuleError(Exception):
 def _validate_username(username: str) -> None:
     if not (3 <= len(username) <= 40):
         raise ValueError("usuario debe tener entre 3 y 40 caracteres")
-    if not all(c.islower() and (c.isalnum() or c in "._-") for c in username):
+    if not all((c.isdigit() or ("a" <= c <= "z") or c in "._-") for c in username):
         raise ValueError("usuario solo letras minúsculas, dígitos, punto, guion o guion bajo")
 
 

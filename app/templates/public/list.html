@@ -1,2 +1,24 @@
 {% extends "base.html" %}
-{% block content %}<div class="card"><h1>Mis incidencias</h1><ul>{% for t in tickets %}<li><a href="/mis-incidencias/{{ t.id }}">{{ t.code }} — {{ t.subject }}</a></li>{% endfor %}</ul></div>{% endblock %}
+{% block title %}Mis incidencias — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>Mis incidencias</h1>
+    <p class="muted">Desde esta página puedes seguir el estado de tus avisos y responder.</p>
+    <table>
+        <thead><tr><th>Código</th><th>Asunto</th><th>Estado</th><th>Prioridad</th><th>Actualizada (GFH)</th></tr></thead>
+        <tbody>
+        {% for t in tickets %}
+            <tr>
+                <td><a href="/mis-incidencias/{{ t.id }}">{{ t.code }}</a></td>
+                <td>{{ t.subject }}</td>
+                <td><span class="badge state-{{ t.state }}">{{ state_labels.get(t.state, t.state) }}</span></td>
+                <td><span class="badge priority-{{ t.priority }}">{{ priority_labels.get(t.priority, t.priority) }}</span></td>
+                <td>{{ t.updated_at | gfh }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5">Todavía no has abierto ninguna incidencia. <a href="/">Crear una</a>.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

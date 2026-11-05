@@ -3,11 +3,12 @@
 {% block content %}
 <div class="card">
     <h1 style="margin-top:0;">Nueva incidencia</h1>
-    <form method="post" action="/incidencias" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else "" }}">
+    <p class="muted">Cuéntanos qué ocurre. No necesitas contraseña: este navegador recordará tus avisos.</p>
+    <form method="post" action="/incidencias" enctype="multipart/form-data" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else '' }}">
         <div class="field">
             <label for="name">Nombre</label>
-            <input type="text" name="name" id="name" value="{{ requester.name or '' }}" required>
+            <input type="text" name="name" id="name" value="{{ requester.name or '' }}" required autocomplete="name">
         </div>
         <div class="field">
             <label for="department_id">Departamento</label>
@@ -27,30 +28,31 @@
         </div>
         <div class="field">
             <label for="device_name">Equipo</label>
-            <input type="text" name="device_name" id="device_name" value="{{ requester.device_name or '' }}">
+            <input type="text" name="device_name" id="device_name" value="{{ requester.device_name or '' }}" placeholder="PC-CONTAB-03">
         </div>
         <div class="field">
             <label for="priority">Prioridad</label>
             <select name="priority" id="priority">
-                <option value="baja">baja</option>
-                <option value="normal">normal</option>
-                <option value="alta">alta</option>
-                <option value="urgente">urgente</option>
+                <option value="baja">Baja</option>
+                <option value="normal" selected>Normal</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
             </select>
         </div>
         <div class="field">
             <label for="subject">Asunto</label>
-            <input type="text" name="subject" id="subject" maxlength="120" required>
+            <input type="text" name="subject" id="subject" maxlength="120" required placeholder="Resumen breve del problema">
         </div>
         <div class="field">
             <label for="description">Descripción</label>
-            <textarea name="description" id="description" rows="6" maxlength="4000" required></textarea>
+            <textarea name="description" id="description" rows="6" maxlength="4000" required
+                      placeholder="Qué pasa, desde cuándo y qué has probado…"></textarea>
         </div>
         <div class="field">
             <label for="files">Adjuntos (máx. 3; PNG, JPEG, WebP o PDF)</label>
             <input type="file" name="files" id="files" multiple accept=".png,.jpg,.jpeg,.webp,.pdf">
         </div>
-        <button type="submit" class="btn btn-primary">Enviar</button>
+        <button type="submit" class="btn btn-primary">Enviar incidencia</button>
     </form>
 </div>
 {% endblock %}

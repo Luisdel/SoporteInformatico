@@ -4,7 +4,11 @@
 <div class="card">
     <p><a href="/mis-incidencias">← Volver a mis incidencias</a></p>
     <h1>{{ ticket.subject }}</h1>
-    <p class="muted">{{ ticket.code }} · Estado: {{ ticket.state }} · Prioridad: {{ ticket.priority }}</p>
+    <p>
+        <span class="badge state-{{ ticket.state }}">{{ state_labels.get(ticket.state, ticket.state) }}</span>
+        <span class="badge priority-{{ ticket.priority }}">{{ priority_labels.get(ticket.priority, ticket.priority) }}</span>
+        <span class="muted">{{ ticket.code }} · Creada {{ ticket.created_at | gfh }}</span>
+    </p>
     <p>{{ ticket.description }}</p>
 
     <h2>Conversación</h2>
@@ -12,7 +16,7 @@
     {% for m in messages %}
         <li class="message message-{{ m.author_type }}">
             <strong>{{ m.author_type }}</strong>
-            <time>{{ m.created_at }}</time>
+            <time>{{ m.created_at | gfh }}</time>
             <p>{{ m.body }}</p>
             {% for a in attachments.get(m.id, []) %}
             <p class="attachment">
@@ -22,14 +26,14 @@
             {% endfor %}
         </li>
     {% else %}
-        <li>Sin mensajes.</li>
+        <li class="muted">Sin mensajes.</li>
     {% endfor %}
     </ul>
 
     <h2>Responder</h2>
     <form method="post" action="/mis-incidencias/{{ ticket.id }}/responder" enctype="multipart/form-data" class="stack">
         <textarea name="body" rows="4" required placeholder="Escribe una respuesta…"></textarea>
-        <label>Adjuntos (máx. 3; PNG, JPEG, WebP o PDF)
+        <label class="muted">Adjuntos (máx. 3; PNG, JPEG, WebP o PDF)
             <input type="file" name="files" multiple accept=".png,.jpg,.jpeg,.webp,.pdf">
         </label>
         <button type="submit" class="btn btn-primary">Enviar respuesta</button>

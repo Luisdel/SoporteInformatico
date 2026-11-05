@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-
 from app.config import Settings, load_settings
 from app.db import get_db
 from app.pcinfo import ClientInfo
@@ -12,11 +10,17 @@ from app.requesters import ensure_requester
 from app.ticket_actions import (
     get_ticket_for_requester, list_attachments, list_messages,
     post_requester_message, mark_read_requester, requester_unread)
-from app.tickets import create_ticket, get_ticket
+from app.tickets import (
+    PRIORITY_LABELS,
+    STATE_LABELS,
+    create_ticket,
+    get_ticket,
+)
 from app.timeutil import utcnow, to_iso
 
+from app.templating import templates
+
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _client(request: Request, settings: Settings):
@@ -98,7 +102,9 @@ def create_incidencia(
 def list_own(request: Request, conn=Depends(get_db)):
     requester, _ = ensure_requester(request, conn, ip=_ip(request), user_agent=request.headers.get("user-agent", ""))
     rows = conn.execute("select * from tickets where requester_id=? order by updated_at desc", (requester["id"],)).fetchall()
-    return templates.TemplateResponse(request, "public/list.html", {"request": request, "tickets": rows})
+    return templates.TemplateResponse(request, "public/list.html", {
+        "request": request, "tickets": rows,
+        "state_labels": STATE_LABELS, "priority_labels": PRIORITY_LABELS})
 
 
 @router.get("/mis-incidencias/{ticket_id}")
@@ -112,7 +118,8 @@ def detail_own(request: Request, ticket_id: int, conn=Depends(get_db)):
     mark_read_requester(conn, ticket_id, now=utcnow())
     return templates.TemplateResponse(request, "public/detail.html", {
         "request": request, "ticket": t, "messages": messages,
-        "attachments": attachments})
+        "attachments": attachments,
+        "state_labels": STATE_LABELS, "priority_labels": PRIORITY_LABELS})
 
 
 @router.post("/mis-incidencias/{ticket_id}/responder")

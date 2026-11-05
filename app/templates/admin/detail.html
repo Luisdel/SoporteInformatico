@@ -4,19 +4,24 @@
 <div class="card">
     <p><a href="/admin">← Volver a la bandeja</a></p>
     <h1>{{ ticket.code }} — {{ ticket.subject }}</h1>
-    <p class="muted">{{ ticket.requester_name }} · {{ state_labels.get(ticket.state, ticket.state) }}</p>
+    <p>
+        <span class="badge state-{{ ticket.state }}">{{ state_labels.get(ticket.state, ticket.state) }}</span>
+        <span class="badge priority-{{ ticket.priority }}">{{ priority_labels.get(ticket.priority, ticket.priority) }}</span>
+        <span class="muted">{{ ticket.requester_name }} · {{ ticket.created_at | gfh }}</span>
+    </p>
     <p>{{ ticket.description }}</p>
     <ul class="messages">
     {% for m in messages %}
         <li class="message message-{{ m.author_type }}{% if m.is_internal %} internal{% endif %}">
             <strong>{{ m.author_type }}</strong>
-            {% if m.is_internal %}<span class="badge">Nota interna</span>{% endif %}
+            {% if m.is_internal %}<span class="badge priority-alta">Nota interna</span>{% endif %}
+            <time>{{ m.created_at | gfh }}</time>
             <p>{{ m.body }}</p>
         </li>
     {% else %}
-        <li>Sin mensajes.</li>
+        <li class="muted">Sin mensajes.</li>
     {% endfor %}
     </ul>
-    <p><a href="/admin/incidencias/{{ ticket.id }}">Gestionar esta incidencia</a></p>
+    <p><a class="btn btn-ghost" href="/admin/incidencias/{{ ticket.id }}">Gestionar esta incidencia</a></p>
 </div>
 {% endblock %}

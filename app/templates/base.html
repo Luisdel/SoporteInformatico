@@ -9,18 +9,23 @@
 </head>
 <body class="app">
     <header class="topbar">
-        <div class="brand">
+        <a class="brand" href="{% if admin is defined %}/admin{% else %}/{% endif %}">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
             <span>Soporte Informático</span>
-        </div>
+        </a>
         <nav class="nav">
             {% if admin is defined %}
-            <a href="/admin" class="btn btn-ghost">Bandeja</a>
+            <a href="/admin" class="btn btn-ghost">Bandeja
+                <span id="admin-alertas" class="badge priority-urgente" hidden></span>
+            </a>
             <a href="/admin/usuarios" class="btn btn-ghost">Usuarios</a>
+            {% if admin.role == "superadmin" %}
+            <a href="/admin/administradores" class="btn btn-ghost">Administradores</a>
+            {% endif %}
             <a href="/admin/catalogos" class="btn btn-ghost">Catálogos</a>
-            <a href="/admin/export.csv" class="btn btn-ghost">Exportar CSV</a>
+            <a href="/admin/export.csv" class="btn btn-ghost">CSV</a>
             <span class="muted">{{ admin.display_name }}</span>
             <form action="/admin/logout" method="post" class="inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -28,7 +33,7 @@
             </form>
             {% else %}
             <a href="/" class="btn btn-ghost">Nueva incidencia</a>
-            <a href="/mis-incidencias" class="btn btn-ghost">Mis incidencias</a>
+            <a href="/mis-incidencias" class="btn btn-ghost">Mis incidencias <span id="notice-dot"></span></a>
             {% endif %}
         </nav>
     </header>

@@ -4,29 +4,38 @@
 <div class="card">
     <p><a href="/admin">← Volver a la bandeja</a></p>
     <h1>{{ ticket.subject }}</h1>
-    <p class="muted">
-        {{ ticket.code }} · {{ state_labels.get(ticket.state, ticket.state) }} ·
-        Prioridad {{ priority_labels.get(ticket.priority, ticket.priority) }} ·
-        Solicitante: <a href="/admin/usuarios/{{ ticket.requester_id }}">{{ ticket.requester_name }}</a>
+    <p>
+        <span class="badge state-{{ ticket.state }}">{{ state_labels.get(ticket.state, ticket.state) }}</span>
+        <span class="badge priority-{{ ticket.priority }}">{{ priority_labels.get(ticket.priority, ticket.priority) }}</span>
+        <span class="muted">{{ ticket.code }} · Creada {{ ticket.created_at | gfh }} · Actualizada {{ ticket.updated_at | gfh }}</span>
     </p>
-    <p>{{ ticket.description }}</p>
-    <p class="muted">Cliente: {{ ticket.client_hostname or "—" }} · {{ ticket.client_ip or "—" }} · {{ ticket.client_user_agent or "—" }}</p>
+    <p class="muted">
+        Solicitante: <a href="/admin/usuarios/{{ ticket.requester_id }}">{{ ticket.requester_name }}</a> ·
+        Equipo: {{ ticket.client_hostname or "—" }} · IP: {{ ticket.client_ip or "—" }}
+    </p>
+    <p class="muted">Navegador: {{ ticket.client_user_agent or "—" }}</p>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <h2>Descripción</h2>
+    <div class="message message-requester">
+        <p>{{ ticket.description }}</p>
+    </div>
 
     <h2>Conversación</h2>
     <ul class="messages">
     {% for m in messages %}
         <li class="message message-{{ m.author_type }}{% if m.is_internal %} internal{% endif %}">
             <strong>{{ m.author_type }}</strong>
-            {% if m.is_internal %}<span class="badge">Nota interna</span>{% endif %}
-            <time>{{ m.created_at }}</time>
+            {% if m.is_internal %}<span class="badge priority-alta">Nota interna</span>{% endif %}
+            <time>{{ m.created_at | gfh }}</time>
             <p>{{ m.body }}</p>
             {% for a in attachments.get(m.id, []) %}
-            <p class="attachment"><a href="/adjuntos/{{ a.id }}">{{ a.original_name }}</a></p>
+            <p class="attachment"><a href="/adjuntos/{{ a.id }}">{{ a.original_name }}</a>
+                <span class="muted">({{ (a.size / 1024) | round(1) }} KB)</span></p>
             {% endfor %}
         </li>
     {% else %}
-        <li>Sin mensajes.</li>
+        <li class="muted">Sin mensajes.</li>
     {% endfor %}
     </ul>
 
@@ -34,54 +43,56 @@
     <form method="post" action="/admin/incidencias/{{ ticket.id }}/responder" enctype="multipart/form-data" class="stack">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <textarea name="body" rows="4" required placeholder="Escribe una respuesta…"></textarea>
-        <label>Adjuntos (máx. 3; PNG, JPEG, WebP o PDF)
+        <label class="muted">Adjuntos (máx. 3; PNG, JPEG, WebP o PDF)
             <input type="file" name="files" multiple accept=".png,.jpg,.jpeg,.webp,.pdf">
         </label>
-        <label><input type="checkbox" name="is_internal" value="1"> Nota interna (no visible para el solicitante)</label>
-        <button type="submit" class="btn">Enviar respuesta</button>
+        <label class="muted"><input type="checkbox" name="is_internal" value="1"> Nota interna (no visible para el solicitante)</label>
+        <button type="submit" class="btn btn-primary">Enviar respuesta</button>
     </form>
 
     <h2>Gestión</h2>
-    <form method="post" action="/admin/incidencias/{{ ticket.id }}/estado" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <select name="state">
-            {% for value in states %}
-            <option value="{{ value }}" {% if ticket.state == value %}selected{% endif %}>{{ state_labels[value] }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn">Cambiar estado</button>
-    </form>
+    <div class="filters">
+        <form method="post" action="/admin/incidencias/{{ ticket.id }}/estado" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <select name="state">
+                {% for value in states %}
+                <option value="{{ value }}" {% if ticket.state == value %}selected{% endif %}>{{ state_labels[value] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-ghost">Cambiar estado</button>
+        </form>
 
-    <form method="post" action="/admin/incidencias/{{ ticket.id }}/asignar" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <select name="assignee">
-            <option value="none">Sin asignar</option>
-            <option value="me">Asignarme a mí</option>
-            {% for a in admins %}
-            <option value="{{ a.id }}" {% if ticket.assigned_admin_id == a.id %}selected{% endif %}>{{ a.display_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn">Asignar</button>
-    </form>
+        <form method="post" action="/admin/incidencias/{{ ticket.id }}/asignar" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <select name="assignee">
+                <option value="none">Sin asignar</option>
+                <option value="me">Asignarme a mí</option>
+                {% for a in admins %}
+                <option value="{{ a.id }}" {% if ticket.assigned_admin_id == a.id %}selected{% endif %}>{{ a.display_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-ghost">Asignar</button>
+        </form>
+    </div>
 
     <form method="post" action="/admin/incidencias/{{ ticket.id }}/campos" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <select name="priority">
+        <select name="priority" aria-label="Prioridad">
             {% for value in priorities %}
             <option value="{{ value }}" {% if ticket.priority == value %}selected{% endif %}>{{ priority_labels[value] }}</option>
             {% endfor %}
         </select>
-        <select name="department_id">
+        <select name="department_id" aria-label="Departamento">
             {% for d in departments %}
             <option value="{{ d.id }}" {% if ticket.department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
             {% endfor %}
         </select>
-        <select name="category_id">
+        <select name="category_id" aria-label="Categoría">
             {% for c in categories %}
             <option value="{{ c.id }}" {% if ticket.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn">Guardar campos</button>
+        <button type="submit" class="btn btn-ghost">Guardar campos</button>
     </form>
 </div>
 {% endblock %}

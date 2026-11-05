@@ -3,6 +3,19 @@ from __future__ import annotations
 PRIORITIES = ["baja", "normal", "alta", "urgente"]
 STATES = ["nueva", "en_curso", "en_espera", "resuelta"]
 
+STATE_LABELS = {
+    "nueva": "Nueva",
+    "en_curso": "En curso",
+    "en_espera": "En espera",
+    "resuelta": "Resuelta",
+}
+PRIORITY_LABELS = {
+    "baja": "Baja",
+    "normal": "Normal",
+    "alta": "Alta",
+    "urgente": "Urgente",
+}
+
 def next_code(conn, *, now):
     year = now.year
     conn.execute("update ticket_counters set value = value + 1 where year=?", (year,))

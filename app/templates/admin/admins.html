@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Administradores — Soporte Informático{% endblock %}
+{% block content %}
+<div class="card">
+    <p><a href="/admin/usuarios">← Volver a usuarios</a></p>
+    <h1>Administradores</h1>
+    <p class="muted">Solo el superadministrador puede crear cuentas, cambiar roles, activar o desactivar accesos y resetear contraseñas.</p>
+
+    {% if message %}<div class="flash ok">{{ message }}</div>{% endif %}
+    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+
+    <table>
+        <thead>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso (GFH)</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+        {% for a in admins %}
+            <tr>
+                <td>{{ a.username }}{% if a.id == admin.id %} <span class="muted">(tú)</span>{% endif %}</td>
+                <td>{{ a.display_name }}</td>
+                <td><span class="badge role-{{ a.role }}">{{ a.role }}</span></td>
+                <td><span class="badge {{ 'activo' if a.active else 'inactivo' }}">{{ "Activo" if a.active else "Inactivo" }}</span></td>
+                <td>{{ a.last_login_at | gfh }}</td>
+                <td>
+                    <div class="actions">
+                        {% if a.id != admin.id %}
+                        <form method="post" action="/admin/administradores/{{ a.id }}/estado">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="accion" value="{{ 'desactivar' if a.active else 'activar' }}">
+                            <button type="submit" class="btn btn-ghost">{{ 'Desactivar' if a.active else 'Activar' }}</button>
+                        </form>
+                        <form method="post" action="/admin/administradores/{{ a.id }}/rol">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <select name="role" aria-label="Rol de {{ a.username }}">
+                                <option value="admin" {% if a.role == 'admin' %}selected{% endif %}>admin</option>
+                                <option value="superadmin" {% if a.role == 'superadmin' %}selected{% endif %}>superadmin</option>
+                            </select>
+                            <button type="submit" class="btn btn-ghost">Rol</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <details>
+                        <summary class="muted">Resetear contraseña</summary>
+                        <form method="post" action="/admin/administradores/{{ a.id }}/password" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="password" name="password" placeholder="Nueva contraseña" required minlength="10">
+                            <input type="password" name="repeat_password" placeholder="Repite" required minlength="10">
+                            <button type="submit" class="btn btn-ghost">Guardar</button>
+                        </form>
+                    </details>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Crear administrador</h2>
+    <form method="post" action="/admin/administradores" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+            <label for="new-username">Usuario</label>
+            <input type="text" id="new-username" name="username" required minlength="3" maxlength="40"
+                   pattern="[a-z0-9._-]+" placeholder="nombre.apellido">
+            <span class="muted">Solo minúsculas, dígitos, punto, guion o guion bajo.</span>
+        </div>
+        <div class="field">
+            <label for="new-display">Nombre visible</label>
+            <input type="text" id="new-display" name="display_name" required placeholder="Nombre y apellidos">
+        </div>
+        <div class="field">
+            <label for="new-role">Rol</label>
+            <select id="new-role" name="role">
+                <option value="admin">admin</option>
+                <option value="superadmin">superadmin</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="new-password">Contraseña</label>
+            <input type="password" id="new-password" name="password" required minlength="10">
+        </div>
+        <div class="field">
+            <label for="new-repeat">Repite la contraseña</label>
+            <input type="password" id="new-repeat" name="repeat_password" required minlength="10">
+        </div>
+        <button type="submit" class="btn btn-primary">Crear administrador</button>
+    </form>
+
+    <div class="danger-zone">
+        <h2>Zona de peligro</h2>
+        <p>Elimina todas las incidencias, mensajes, adjuntos, solicitantes y el resto de administradores.
+           Tu cuenta de superadministrador y esta sesión se conservan. Esta acción no se puede deshacer.</p>
+        <form method="post" action="/admin/administradores/borrar-todo" class="inline-form"
+              onsubmit="return confirm('¿Seguro que quieres borrar TODA la base de datos? Esta acción no se puede deshacer.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="text" name="confirm" placeholder="Escribe BORRAR" required autocomplete="off">
+            <button type="submit" class="btn btn-danger">Borrar toda la base de datos</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -2,20 +2,25 @@
 {% block title %}Usuarios — Soporte Informático{% endblock %}
 {% block content %}
 <div class="card">
-    <h1>Usuarios</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <h1 style="margin:0;">Usuarios</h1>
+        {% if admin.role == "superadmin" %}
+        <a href="/admin/administradores" class="btn btn-ghost">Gestionar administradores</a>
+        {% endif %}
+    </div>
     <form method="get" action="/admin/usuarios" class="filters">
         <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o equipo">
-        <button type="submit" class="btn">Buscar</button>
+        <button type="submit" class="btn btn-primary">Buscar</button>
     </form>
     <table>
-        <thead><tr><th>Nombre</th><th>Equipo</th><th>Última IP</th><th>Última actividad</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Equipo</th><th>Última IP</th><th>Última actividad (GFH)</th><th></th></tr></thead>
         <tbody>
         {% for u in users %}
             <tr>
                 <td>{{ u.name or "Sin identificar" }}</td>
                 <td>{{ u.device_name or "—" }}</td>
                 <td>{{ u.last_ip or "—" }}</td>
-                <td>{{ u.last_seen_at }}</td>
+                <td>{{ u.last_seen_at | gfh }}</td>
                 <td><a href="/admin/usuarios/{{ u.id }}">Ver historial</a></td>
             </tr>
         {% else %}

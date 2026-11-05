@@ -3,6 +3,10 @@
 {% block content %}
 <div class="card">
     <h1>Incidencias</h1>
+    <p class="muted">
+        Sin asignar: <strong>{{ unread.sin_asignar }}</strong> ·
+        Mis no leídas: <strong>{{ unread.mis_no_leidas }}</strong>
+    </p>
     <form method="get" action="/admin" class="filters">
         <input type="search" name="q" value="{{ filters.q }}" placeholder="Buscar código o asunto">
         <select name="state">
@@ -11,27 +15,27 @@
             <option value="{{ value }}" {% if filters.state == value %}selected{% endif %}>{{ state_labels[value] }}</option>
             {% endfor %}
         </select>
-        <label><input type="checkbox" name="mine" value="1" {% if filters.mine == "1" %}checked{% endif %}> Solo asignadas a mí</label>
-        <button type="submit" class="btn">Filtrar</button>
+        <label class="muted"><input type="checkbox" name="mine" value="1" {% if filters.mine == "1" %}checked{% endif %}> Solo asignadas a mí</label>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <p class="muted">Sin asignar: {{ unread.sin_asignar }} · Mis no leídas: {{ unread.mis_no_leidas }}</p>
     <table>
         <thead>
-            <tr><th>Código</th><th>Estado</th><th>Prioridad</th><th>Asunto</th><th>Solicitante</th><th>Asignada a</th></tr>
+            <tr><th>Código</th><th>Estado</th><th>Prioridad</th><th>Asunto</th><th>Solicitante</th><th>Asignada a</th><th>Actualizada (GFH)</th></tr>
         </thead>
         <tbody>
         {% for t in tickets %}
             <tr>
                 <td><a href="/admin/incidencias/{{ t.id }}">{{ t.code }}</a></td>
-                <td>{{ state_labels.get(t.state, t.state) }}</td>
-                <td>{{ priority_labels.get(t.priority, t.priority) }}</td>
+                <td><span class="badge state-{{ t.state }}">{{ state_labels.get(t.state, t.state) }}</span></td>
+                <td><span class="badge priority-{{ t.priority }}">{{ priority_labels.get(t.priority, t.priority) }}</span></td>
                 <td>{{ t.subject }}</td>
                 <td>{{ t.requester_name }}</td>
                 <td>{{ t.assignee_name or "—" }}</td>
+                <td>{{ t.updated_at | gfh }}</td>
             </tr>
         {% else %}
-            <tr><td colspan="6">No hay incidencias.</td></tr>
+            <tr><td colspan="7">No hay incidencias.</td></tr>
         {% endfor %}
         </tbody>
     </table>

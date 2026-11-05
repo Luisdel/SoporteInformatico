@@ -10,7 +10,7 @@
     <form method="post" action="/admin/catalogos/departments" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="text" name="name" placeholder="Nuevo departamento" required>
-        <button type="submit" class="btn">Añadir</button>
+        <button type="submit" class="btn btn-primary">Añadir</button>
     </form>
     <table>
         <thead><tr><th>Nombre</th><th>Estado</th><th>Orden</th><th>Acciones</th></tr></thead>
@@ -24,7 +24,7 @@
                         <button type="submit" class="btn btn-ghost">Renombrar</button>
                     </form>
                 </td>
-                <td>{{ "Activo" if item.active else "Archivado" }}</td>
+                <td><span class="badge {{ 'activo' if item.active else 'inactivo' }}">{{ "Activo" if item.active else "Archivado" }}</span></td>
                 <td>{{ item.sort_order }}</td>
                 <td class="actions">
                     <form method="post" action="/admin/catalogos/departments/{{ item.id }}/subir" class="inline-form">
@@ -49,7 +49,7 @@
     <form method="post" action="/admin/catalogos/categories" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="text" name="name" placeholder="Nueva categoría" required>
-        <button type="submit" class="btn">Añadir</button>
+        <button type="submit" class="btn btn-primary">Añadir</button>
     </form>
     <table>
         <thead><tr><th>Nombre</th><th>Estado</th><th>Orden</th><th>Acciones</th></tr></thead>
@@ -63,7 +63,7 @@
                         <button type="submit" class="btn btn-ghost">Renombrar</button>
                     </form>
                 </td>
-                <td>{{ "Activo" if item.active else "Archivado" }}</td>
+                <td><span class="badge {{ 'activo' if item.active else 'inactivo' }}">{{ "Activo" if item.active else "Archivado" }}</span></td>
                 <td>{{ item.sort_order }}</td>
                 <td class="actions">
                     <form method="post" action="/admin/catalogos/categories/{{ item.id }}/subir" class="inline-form">

@@ -3,16 +3,15 @@ from __future__ import annotations
 from datetime import timedelta
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-
 from app.auth import AdminContext, require_admin
 from app.config import Settings, load_settings
 from app.db import get_db
 from app.security import find_admin_session, touch_admin_session, new_token, hash_token, RateLimiter
 from app.timeutil import utcnow, to_iso
 
+from app.templating import templates
+
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/admin/login", response_class=HTMLResponse)

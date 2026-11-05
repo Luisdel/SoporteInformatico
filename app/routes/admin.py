@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import csv
 import io
+from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
-
+from app.admins import (
+    AdminRuleError,
+    create_admin,
+    reset_password,
+    set_active,
+    set_role,
+)
 from app.auth import AdminContext, require_admin, require_superadmin, verify_csrf
 from app.catalogs import (
     CATALOG_KINDS,
@@ -32,25 +39,18 @@ from app.ticket_actions import (
     mark_read_admin,
     post_admin_message,
 )
-from app.tickets import PRIORITIES, STATES, get_ticket
-from app.timeutil import to_iso, utcnow
+from app.templating import templates
+from app.tickets import (
+    PRIORITIES,
+    PRIORITY_LABELS,
+    STATE_LABELS,
+    STATES,
+    get_ticket,
+)
+from app.timeutil import to_gfh, to_iso, utcnow
 from app.uploads import UploadError, save_many
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
-
-STATE_LABELS = {
-    "nueva": "Nueva",
-    "en_curso": "En curso",
-    "en_espera": "En espera",
-    "resuelta": "Resuelta",
-}
-PRIORITY_LABELS = {
-    "baja": "Baja",
-    "normal": "Normal",
-    "alta": "Alta",
-    "urgente": "Urgente",
-}
 
 
 def _admin_ctx(admin: AdminContext) -> dict:
@@ -437,20 +437,20 @@ def admin_export(
         writer.writerow(
             [
                 row["code"],
-                row["state"],
-                row["priority"],
+                STATE_LABELS.get(row["state"], row["state"]),
+                PRIORITY_LABELS.get(row["priority"], row["priority"]),
                 row["subject"],
                 row["requester_name"],
                 row["department"] or "",
                 row["category"] or "",
-                row["created_at"],
-                row["updated_at"],
+                to_gfh(row["created_at"]),
+                to_gfh(row["updated_at"]),
             ]
         )
     buffer.seek(0)
-    filename = f"incidencias-{utcnow().date().isoformat()}.csv"
+    filename = f"incidencias-{to_gfh(utcnow())}.csv"
     return StreamingResponse(
-        iter([buffer.getvalue()]),
+        iter([buffer.getvalue().encode("utf-8-sig")]),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
@@ -483,6 +483,158 @@ def admin_password(
     )
     conn.commit()
     return RedirectResponse(url="/admin", status_code=303)
+
+
+def _admins_redirect(*, ok: str = "", error: str = "") -> RedirectResponse:
+    params = {}
+    if ok:
+        params["ok"] = ok
+    if error:
+        params["error"] = error
+    url = "/admin/administradores"
+    if params:
+        url += "?" + urlencode(params)
+    return RedirectResponse(url=url, status_code=303)
+
+
+def _list_admins(conn):
+    return conn.execute(
+        "select id, username, display_name, role, active, last_login_at, created_at"
+        " from admins order by role, lower(username)"
+    ).fetchall()
+
+
+@router.get("/admin/administradores", response_class=HTMLResponse)
+def admin_admins(
+    request: Request,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    ok: str = "",
+    error: str = "",
+):
+    return templates.TemplateResponse(
+        request,
+        "admin/admins.html",
+        {
+            "request": request,
+            "admins": _list_admins(conn),
+            "message": ok,
+            "error": error,
+            **_admin_ctx(admin),
+        },
+    )
+
+
+@router.post("/admin/administradores")
+def admin_admins_create(
+    request: Request,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    username: str = Form(""),
+    display_name: str = Form(""),
+    role: str = Form("admin"),
+    password: str = Form(""),
+    repeat_password: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(admin, csrf_token)
+    if password != repeat_password:
+        return _admins_redirect(error="Las contraseñas no coinciden")
+    try:
+        create_admin(
+            conn,
+            username=username.strip(),
+            display_name=display_name.strip() or username.strip(),
+            password=password,
+            role=role,
+        )
+    except Exception as exc:  # ValueError o restricción UNIQUE
+        return _admins_redirect(error=f"No se pudo crear: {exc}")
+    return _admins_redirect(ok=f"Administrador «{username.strip()}» creado")
+
+
+@router.post("/admin/administradores/{admin_id}/estado")
+def admin_admins_state(
+    request: Request,
+    admin_id: int,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    accion: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(admin, csrf_token)
+    try:
+        set_active(conn, admin_id, 0 if accion == "desactivar" else 1, admin.id)
+    except AdminRuleError as exc:
+        return _admins_redirect(error=str(exc))
+    return _admins_redirect(ok="Estado actualizado")
+
+
+@router.post("/admin/administradores/{admin_id}/rol")
+def admin_admins_role(
+    request: Request,
+    admin_id: int,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    role: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(admin, csrf_token)
+    try:
+        set_role(conn, admin_id, role, admin.id)
+    except AdminRuleError as exc:
+        return _admins_redirect(error=str(exc))
+    return _admins_redirect(ok="Rol actualizado")
+
+
+@router.post("/admin/administradores/{admin_id}/password")
+def admin_admins_password(
+    request: Request,
+    admin_id: int,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    password: str = Form(""),
+    repeat_password: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(admin, csrf_token)
+    if password != repeat_password:
+        return _admins_redirect(error="Las contraseñas no coinciden")
+    try:
+        reset_password(conn, admin_id, password)
+    except ValueError as exc:
+        return _admins_redirect(error=str(exc))
+    return _admins_redirect(ok="Contraseña actualizada")
+
+
+@router.post("/admin/administradores/borrar-todo")
+def admin_wipe_all(
+    request: Request,
+    admin: AdminContext = Depends(require_superadmin),
+    conn=Depends(get_db),
+    confirm: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(admin, csrf_token)
+    if confirm.strip() != "BORRAR":
+        return _admins_redirect(error="Escribe BORRAR para confirmar la limpieza")
+    upload_dir = Path(request.app.state.settings.upload_dir)
+    for row in conn.execute("select stored_name from attachments"):
+        (upload_dir / row["stored_name"]).unlink(missing_ok=True)
+    conn.execute("delete from attachments")
+    conn.execute("delete from messages")
+    conn.execute("delete from ticket_events")
+    conn.execute("delete from ticket_reads")
+    conn.execute("delete from tickets")
+    conn.execute("delete from requesters")
+    conn.execute("delete from admin_audit")
+    conn.execute("delete from ticket_counters")
+    conn.execute("delete from admin_sessions where id != ?", (admin.session_id,))
+    conn.execute("delete from admins where id != ?", (admin.id,))
+    conn.commit()
+    return _admins_redirect(
+        ok="Base de datos limpiada: incidencias, usuarios y otros administradores eliminados"
+    )
 
 
 @router.get("/api/admin/avisos")

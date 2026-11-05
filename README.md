@@ -52,6 +52,19 @@ python -m app.manage list-admins
 python -m app.manage reset-password admin
 ```
 
+Ya dentro de la aplicación, el superadministrador puede crear más cuentas desde
+**Administradores** (crear, activar/desactivar, cambiar rol y resetear
+contraseña). Esa misma página incluye la **zona de peligro** para vaciar la base
+de datos completa: incidencias, mensajes, adjuntos, solicitantes y el resto de
+administradores. La cuenta y la sesión del superadministrador actual se
+conservan.
+
+## Formato de fecha
+
+Todas las fechas y horas se muestran en **GFH/DTG Zulú** (`DDHHMMZMMMYY`), por
+ejemplo `051430ZNOV26`. La base de datos guarda ISO 8601 en UTC; el formato se
+aplica en la interfaz y en la exportación CSV.
+
 ## Arrancar
 
 ```powershell
@@ -73,7 +86,8 @@ python -m pytest tests/ -q
 
 La suite cubre creación pública, cookie de dispositivo, login y sesiones,
 bandeja y detalle de admin, asignación y avisos, usuarios, catálogos,
-contraseñas, exportación CSV, adjuntos y validaciones de seguridad.
+contraseñas, exportación CSV, adjuntos, gestión de administradores, limpieza
+total de la base de datos, formato GFH y validaciones de seguridad.
 
 ## Estructura
 

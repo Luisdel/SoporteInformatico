@@ -4,32 +4,51 @@
 <div class="card">
     <p><a href="/admin/usuarios">← Volver a usuarios</a></p>
     <h1>{{ user.name or "Sin identificar" }}</h1>
-    <p class="muted">Equipo: {{ user.device_name or "—" }} · Última IP: {{ user.last_ip or "—" }} · Actividad: {{ user.last_seen_at }}</p>
+    <p class="muted">
+        Equipo: {{ user.device_name or "—" }} · Última IP: {{ user.last_ip or "—" }} ·
+        Última actividad: {{ user.last_seen_at | gfh }}
+    </p>
 
     <h2>Datos</h2>
     <form method="post" action="/admin/usuarios/{{ user.id }}" class="stack">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Nombre <input type="text" name="name" value="{{ user.name }}"></label>
-        <label>Equipo <input type="text" name="device_name" value="{{ user.device_name }}"></label>
-        <label>Departamento
-            <select name="department_id">
+        <div class="field">
+            <label for="user-name">Nombre</label>
+            <input type="text" id="user-name" name="name" value="{{ user.name }}">
+        </div>
+        <div class="field">
+            <label for="user-device">Equipo</label>
+            <input type="text" id="user-device" name="device_name" value="{{ user.device_name }}">
+        </div>
+        <div class="field">
+            <label for="user-department">Departamento</label>
+            <select id="user-department" name="department_id">
                 <option value="">—</option>
                 {% for d in departments %}
                 <option value="{{ d.id }}" {% if user.department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
                 {% endfor %}
             </select>
-        </label>
-        <label><input type="checkbox" name="apply_history" value="1"> Aplicar también al historial de incidencias</label>
-        <button type="submit" class="btn">Guardar</button>
+        </div>
+        <label class="muted"><input type="checkbox" name="apply_history" value="1"> Aplicar también al historial de incidencias</label>
+        <button type="submit" class="btn btn-primary">Guardar</button>
     </form>
 
     <h2>Historial</h2>
-    <ul>
-    {% for t in history %}
-        <li><a href="/admin/incidencias/{{ t.id }}">{{ t.code }}</a> — {{ t.subject }} ({{ t.state }})</li>
-    {% else %}
-        <li>Sin incidencias registradas.</li>
-    {% endfor %}
-    </ul>
+    <table>
+        <thead><tr><th>Código</th><th>Asunto</th><th>Estado</th><th>Prioridad</th><th>Creada (GFH)</th></tr></thead>
+        <tbody>
+        {% for t in history %}
+            <tr>
+                <td><a href="/admin/incidencias/{{ t.id }}">{{ t.code }}</a></td>
+                <td>{{ t.subject }}</td>
+                <td><span class="badge state-{{ t.state }}">{{ t.state }}</span></td>
+                <td><span class="badge priority-{{ t.priority }}">{{ t.priority }}</span></td>
+                <td>{{ t.created_at | gfh }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5">Sin incidencias registradas.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
