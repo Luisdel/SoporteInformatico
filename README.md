@@ -9,6 +9,8 @@ gestionan con login, asignación, catálogos y datos del equipo.
 - Usuarios: cookie de dispositivo (hash SHA-256 en base de datos).
 - Administradores: sesión en servidor, contraseña PBKDF2 y CSRF.
 - Adjuntos: PNG, JPEG, WebP o PDF validados por firma, máximo 5 MB y 3 por mensaje.
+- Actualización automática: las páginas se recargan cada 5 minutos, salvo que haya
+  un borrador en curso; se conserva la posición de scroll.
 
 ## Requisitos
 
