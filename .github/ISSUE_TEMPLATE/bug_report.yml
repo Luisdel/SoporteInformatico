@@ -1,0 +1,40 @@
+name: Reportar un error
+description: Informa de un comportamiento incorrecto reproducible
+title: "[Error]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe el error sin incluir contraseñas, tokens, datos personales ni
+        adjuntos reales.
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: Qué ocurrió y qué esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduccion
+    attributes:
+      label: Pasos para reproducir
+      placeholder: |
+        1. Abrir ...
+        2. Pulsar ...
+        3. Observar ...
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: Entorno
+      description: Sistema operativo, versión de Python y navegador.
+    validations:
+      required: true
+  - type: textarea
+    id: evidencias
+    attributes:
+      label: Evidencias
+      description: Logs, capturas o respuesta HTTP. Elimina datos sensibles.
