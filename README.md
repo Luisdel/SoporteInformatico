@@ -290,6 +290,14 @@ de administradores; se conservan tu cuenta y tu sesión.
 
 ## Desarrollo y pruebas
 
+### Entorno y configuración del editor
+
+El repositorio incluye `.editorconfig` para aplicar UTF-8, finales de línea LF,
+indentación de cuatro espacios en Python y dos espacios en archivos web/YAML.
+Usa VS Code con la extensión oficial de Python; no se requiere una
+configuración específica. No añadas `.env`, bases SQLite ni archivos de
+`data/` al control de versiones.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .\.venv\Scripts\Activate.ps1
@@ -301,6 +309,19 @@ La suite cubre creación pública, cookie de dispositivo, login y sesiones,
 bandeja y detalle, asignación y avisos, usuarios, catálogos, contraseñas,
 exportación CSV, adjuntos, administradores, limpieza total, formato GFH y
 validaciones de seguridad.
+
+### Checks disponibles
+
+- Pruebas: `python -m pytest tests/ -q`
+- Compilación de módulos Python: `python -m compileall -q app tests`
+- Ejecución local: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000`
+
+No hay actualmente un linter o formatter configurado en el proyecto. No se
+debió añadir uno con reglas nuevas sin una decisión de mantenimiento.
+
+GitHub Actions ejecuta la instalación de dependencias, la compilación y las
+pruebas en Python 3.13. Dependabot revisa semanalmente las dependencias de pip
+y las acciones usadas por los workflows.
 
 ## Estructura
 
@@ -344,4 +365,21 @@ tests/                suite pytest
 ## Licencia
 
 Este repositorio no incluye todavía una licencia de distribución. Antes de
-publicarlo, añade la que corresponda (por ejemplo MIT o Apache-2.0).
+publicarlo, añade la licencia que corresponda (por ejemplo MIT o Apache-2.0).
+Mientras no exista, no se otorgan derechos de uso, modificación o distribución
+fuera de lo permitido por las reglas del repositorio.
+
+## Contribución
+
+Las propuestas y correcciones se reciben mediante issues y pull requests. Antes
+de enviar cambios:
+
+1. Crea una rama desde la rama por defecto.
+2. Añade o actualiza tests cuando cambie el comportamiento.
+3. Ejecuta `python -m compileall -q app tests` y `python -m pytest tests/ -q`.
+4. No incluyas `.env`, `data/`, secretos ni artefactos generados.
+5. Describe el impacto y las validaciones realizadas en el pull request.
+
+Consulta `CONTRIBUTING.md` para el flujo detallado. Para comunicar una
+vulnerabilidad, usa las instrucciones de `SECURITY.md`; no la publiques
+directamente como issue normal.

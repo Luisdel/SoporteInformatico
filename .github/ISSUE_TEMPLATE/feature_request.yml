@@ -1,0 +1,34 @@
+name: Solicitar una funcionalidad
+description: Proponer una mejora o nueva funcionalidad
+title: "[Funcionalidad]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe el resultado que necesitas sin aportar datos reales ni secretos.
+  - type: textarea
+    id: necesidad
+    attributes:
+      label: Problema o necesidad
+      description: Qué tarea quieres realizar y qué limita el comportamiento actual.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Cómo debería funcionar la funcionalidad.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Otras soluciones o motivos para no seguirlas.
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Impacto
+      description: Usuarios, datos o áreas afectadas.
